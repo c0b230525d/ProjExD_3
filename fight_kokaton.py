@@ -5,8 +5,8 @@ import time
 import pygame as pg
 
 
-WIDTH = 1600  # ゲームウィンドウの幅
-HEIGHT = 900  # ゲームウィンドウの高さ
+WIDTH = 1000  # ゲームウィンドウの幅
+HEIGHT = 600  # ゲームウィンドウの高さ
 NUM_OF_BOMBS = 5  # 爆弾の数
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -137,6 +137,35 @@ class Beam:
             screen.blit(self.img, self.rct)
 
 
+class Score:
+    """
+    スコアを管理するクラス
+    """
+    def __init__(self):
+        """
+        スコアの初期化
+        """
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        self.color = (0, 0, 255)
+        self.value = 0
+        self.img = self.font.render(f"スコア: {self.value}", 0, self.color)
+        self.pos = (100, HEIGHT - 50)
+
+    def increase_score(self):
+        """
+        スコアを増やす
+        """
+        self.value += 1
+
+    def update(self, screen):
+        """
+        スコアの表示を更新する
+        """
+        self.img = self.font.render(f"スコア: {self.value}", 0, self.color)
+        screen.blit(self.img, self.pos)
+
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -144,6 +173,8 @@ def main():
     bird = Bird((900, 400))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     beams = []  # 複数のビームを管理するリスト
+    beam = None
+    score = Score()  # スコアの初期化
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -182,9 +213,28 @@ def main():
                 return
             bomb.update(screen)
 
+        
+        for i, bomb in enumerate(bombs):
+            if beam is not None:
+                if beam.rct.colliderect(bomb.rct):  # ビームと爆弾が衝突したら
+                    beam = None
+                    bombs[i] = None
+                    bird.change_img(6, screen)
+                    score.increase_score()  # スコアを増やす
+                    pg.display.update()
+        bombs = [bomb for bomb in bombs if bomb is not None]
+
+        key_lst = pg.key.get_pressed()
+        bird.update(key_lst, screen)
+        for bomb in bombs:
+            bomb.update(screen)
+        if beam is not None:
+            beam.update(screen)
+        score.update(screen)  # スコアの更新
         pg.display.update()
         tmr += 1
         clock.tick(50)
+
 
 
 if __name__ == "__main__":
