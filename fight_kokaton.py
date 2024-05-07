@@ -139,12 +139,11 @@ class Beam:
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
-    screen = pg.display.set_mode((WIDTH, HEIGHT))    
+    screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((900, 400))
-    # bomb = Bomb((255, 0, 0), 10)
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
-    beam = None
+    beams = []  # 複数のビームを管理するリスト
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -152,9 +151,25 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beam = Beam(bird)
+                # スペースキーが押されたら新しいビームを生成し，リストに追加
+                beams.append(Beam(bird))
         screen.blit(bg_img, [0, 0])
-        
+
+        key_lst = pg.key.get_pressed()  # キーの状態を取得
+        # ビームの更新と描画
+        for beam in beams:
+            beam.update(screen)
+            # ビームが爆弾と衝突した場合
+            for bomb in bombs:
+                if beam.rct.colliderect(bomb.rct):
+                    beams.remove(beam)  # 衝突したビームをリストから削除
+                    bomb = None  # 衝突した爆弾をNoneに設定
+                    # こうかとんの画像を変更する処理を追加
+                    bird.change_img(6, screen)
+                    pg.display.update()
+        beams = [beam for beam in beams if check_bound(beam.rct) == (True, True)]  # 画面範囲外のビームを削除
+
+        bird.update(key_lst, screen)  # Birdクラスのupdateメソッドにキーの状態を渡す
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
                 # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
@@ -165,22 +180,8 @@ def main():
                 pg.display.update()
                 time.sleep(5)
                 return
-        # if not (beam is None or bomb is None):
-        for i, bomb in enumerate(bombs):
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct):  # ビームと爆弾が衝突したら
-                    beam = None
-                    bombs[i] = None
-                    bird.change_img(6, screen)
-                    pg.display.update()
-        bombs = [bomb for bomb in bombs if bomb is not None]
-
-        key_lst = pg.key.get_pressed()
-        bird.update(key_lst, screen)
-        for bomb in bombs:
             bomb.update(screen)
-        if beam is not None:
-            beam.update(screen)
+
         pg.display.update()
         tmr += 1
         clock.tick(50)
@@ -191,3 +192,4 @@ if __name__ == "__main__":
     main()
     pg.quit()
     sys.exit()
+    
