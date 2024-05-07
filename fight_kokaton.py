@@ -233,7 +233,7 @@ def main():
         score.update(screen)  # スコアの更新
         pg.display.update()
         tmr += 1
-        clock.tick(50)
+        clock.tick(30)
 
 
 
